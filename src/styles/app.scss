@@ -1,0 +1,59 @@
+/* Write your global styles here, in SCSS syntax. Variables and mixins from the src/variables.scss file are available here without importing */
+.background-image-globally {
+  background-image: url("$assets/svelte.svg");
+  width: 10rem;
+  height: 10rem;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.pre {
+  font-family: monospace;
+  background-color: #d3d3d3;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+}
+
+// CSS Do Rastreador de água:
+
+// Estilos para o corpo da página
+.body {
+  font-family: Arial, sans-serif;
+  background-color: #f8f9fa;
+  margin: 0;
+  padding: 0;
+}
+
+// Estilos para o cabeçalho
+.h1 {
+  color: #007bff;
+}
+
+// Estilos para os botões
+.button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: darken(#007bff, 10%);
+  }
+}
+
+// Estilos para a barra de progresso
+.progress {
+  background-color: #ddd;
+  height: 20px;
+  margin-top: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+
+  .bar {
+    background-color: #007bff;
+    height: 100%;
+    transition: width 0.3s ease-in-out;
+  }
+}

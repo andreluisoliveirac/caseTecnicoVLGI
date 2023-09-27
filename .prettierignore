@@ -1,0 +1,15 @@
+# External packages
+node_modules/*
+
+# Native
+android/*
+ios/*
+
+# Build
+dist/*
+storybook-static/*
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
