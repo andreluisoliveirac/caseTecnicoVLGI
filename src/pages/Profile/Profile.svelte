@@ -6,6 +6,7 @@
     dailyWaterGoal,
     setDailyWaterGoal,
   } from "$stores/WaterConsumed";
+  import { onMount } from "svelte";
 </script>
 
 {#if $LoggedInUser}
@@ -18,6 +19,7 @@
   </article>
 {/if}
 
+<!-- Adicionar a quantidade de água  -->
 <div class="container">
   <h1 class="rastreador">Rastreador de Água</h1>
 
