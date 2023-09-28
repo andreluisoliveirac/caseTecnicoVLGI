@@ -7,6 +7,38 @@
     setDailyWaterGoal,
   } from "$stores/WaterConsumed";
   import { onMount } from "svelte";
+
+  async function requestNotificationPermission() {
+    try {
+      const permission = await Notification.requestPermission();
+      return permission;
+    } catch (error) {
+      console.error("Erro ao solicitar permissão de notificação:", error);
+      return "denied";
+    }
+  }
+
+  function showNotification() {
+    dailyWaterGoal.subscribe(($dailyWaterGoal) => {
+      void requestNotificationPermission().then((permission) => {
+        if (permission === "granted") {
+          const notification = new Notification("Hora de beber água!", {
+            body: `Lembre-se de beber ${$dailyWaterGoal} ml de água regularmente.`,
+          });
+
+          notification.onclick = () => {
+            // Redirecionar para a página de registro de água ingerida
+            window.location.href = "/profile";
+          };
+        }
+      });
+    });
+  }
+
+  onMount(() => {
+    showNotification();
+    setInterval(showNotification, 15 * 60 * 1000);
+  });
 </script>
 
 {#if $LoggedInUser}
