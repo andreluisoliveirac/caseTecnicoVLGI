@@ -1,190 +1,115 @@
 <script lang="ts">
-  import svelteLogo from "$assets/svelte.svg";
+  import { onMount } from "svelte";
+  import { push } from "svelte-spa-router";
+
+  interface Pause {
+    type: string;
+    timestamp: Date;
+  }
+
+  const NOTIFICATION_INTERVAL = 30 * 60 * 1000;
+
+  let pauses: Pause[] = [];
+
+  $: totalPauses = pauses.length;
+  $: {
+    const today = new Date().toLocaleDateString();
+    pausesToday = pauses.filter(
+      (pause) => pause.timestamp.toLocaleDateString() === today
+    ).length;
+  }
+  let pausesToday = 0;
+
+  function registerPause(type: string) {
+    const timestamp = new Date();
+    pauses = [...pauses, { type, timestamp }];
+  }
+
+  function updateCounters() {
+    totalPauses = pauses.length;
+
+    const today = new Date().toLocaleDateString();
+    pausesToday = pauses.filter(
+      (pause) => pause.timestamp.toLocaleDateString() === today
+    ).length;
+  }
+
+  onMount(() => {
+    updateCounters();
+
+    setInterval(() => {
+      notifyUserToMove();
+    }, NOTIFICATION_INTERVAL);
+  });
+
+  function requestNotificationPermission(): Promise<NotificationPermission> {
+    if (Notification.permission === "denied") {
+      return Promise.reject(new Error("Permission denied"));
+    }
+    if (Notification.permission === "granted") {
+      return Promise.resolve("granted");
+    }
+    return Notification.requestPermission();
+  }
+
+  function notifyUserToMove() {
+    requestNotificationPermission()
+      .then((permission) => {
+        if (permission === "granted") {
+          const notification = new Notification(
+            "Hora de se levantar e andar ou alongar!",
+            {
+              icon: "path/to/your/icon.png",
+              body: "Clique para registrar uma pausa no aplicativo.",
+            }
+          );
+
+          notification.onclick = () => {
+            registerPause("Andar");
+          };
+        }
+      })
+      .catch((error) => {
+        console.error("Erro ao solicitar permissão de notificação:", error);
+      });
+  }
 </script>
 
-<article>
-  <section>
-    <h2>Pages in Storybook</h2>
-    <p>
-      We recommend building UIs with a
-      <a
-        href="https://blog.hichroma.com/component-driven-development-ce1109d56c8e"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <strong>component-driven</strong>
-      </a>
-      process starting with atomic components and ending with pages.
-    </p>
-    <p>
-      Render pages with mock data. This makes it easy to build and review page states without
-      needing to navigate to them in your app. Here are some handy patterns for managing page data
-      in Storybook:
-    </p>
+<main>
+  <h1>Rastreador de Pausas</h1>
+
+  <button on:click={() => registerPause("Andar")}
+    >Registrar Pausa para Andar</button
+  >
+  <button on:click={() => registerPause("Alongar")}
+    >Registrar Pausa para Alongar</button
+  >
+
+  <h2>Registros de Pausas</h2>
+  {#if pauses.length > 0}
     <ul>
-      <li>
-        Use a higher-level connected component. Storybook helps you compose such data from the
-        "args" of child component stories
-      </li>
-      <li>
-        Assemble data in the page component from your services. You can mock these services out
-        using Storybook.
-      </li>
+      {#each pauses as { type, timestamp }}
+        <li>{type} - {timestamp.toLocaleTimeString()}</li>
+      {/each}
     </ul>
-    <p>
-      Get a guided tutorial on component-driven development at
-      <a
-        href="https://storybook.js.org/tutorials/"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Storybook tutorials
-      </a>
-      . Read more in the
-      <a
-        href="https://storybook.js.org/docs"
-        target="_blank"
-        rel="noopener noreferrer">docs</a
-      >
-      .
-    </p>
-    <div class="tip-wrapper">
-      <span class="tip">Tip</span>
-      Adjust the width of the canvas with the
-      <svg
-        width="10"
-        height="10"
-        viewBox="0 0 12 12"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <g
-          fill="none"
-          fill-rule="evenodd"
-        >
-          <path
-            d="M1.5 5.2h4.8c.3 0 .5.2.5.4v5.1c-.1.2-.3.3-.4.3H1.4a.5.5 0
-            01-.5-.4V5.7c0-.3.2-.5.5-.5zm0-2.1h6.9c.3 0 .5.2.5.4v7a.5.5 0 01-1 0V4H1.5a.5.5 0
-            010-1zm0-2.1h9c.3 0 .5.2.5.4v9.1a.5.5 0 01-1 0V2H1.5a.5.5 0 010-1zm4.3 5.2H2V10h3.8V6.2z"
-            id="a"
-            fill="#999"
-          />
-        </g>
-      </svg>
-      Viewports addon in the toolbar
-    </div>
-  </section>
-</article>
-<article>
-  <section>
-    <h2>Image referencing</h2>
-    <p>
-      To test if all image imports are working consistently, there's 3 images that should be the
-      same visually, but were referenced differently. If you see only two images, there's something
-      wrong!
-    </p>
-    <div class="background-image" />
-    <img
-      src={svelteLogo}
-      alt="A"
-      class="image-tag"
-    />
-    <div class="background-image-globally" />
-  </section>
-</article>
-<article>
-  <section>
-    <h2>.env variables</h2>
-    <p>
-      Only variables starting with <span class="pre">VITE_</span> will be available to access via
-      <span class="pre">import.meta.env</span>
-    </p>
-    <pre>import.meta.env: {JSON.stringify(import.meta.env, undefined, 4)}</pre>
-  </section>
-</article>
+  {:else}
+    <p>Nenhuma pausa registrada ainda.</p>
+  {/if}
 
-<style lang="scss">
-  section {
-    font-family: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size: 14px;
-    line-height: 24px;
-    padding: 48px 20px;
-    margin: 0 auto;
-    max-width: 600px;
-    color: #333;
-  }
+  <div>
+    <h2>Estatísticas</h2>
+    <p>Total de Pausas: {totalPauses}</p>
+    <p>Pausas Hoje: {pausesToday}</p>
+    <p>Progresso do Dia: {Math.round((pausesToday / 4) * 100)}%</p>
+  </div>
 
-  section h2 {
-    font-weight: 700;
-    font-size: 32px;
-    line-height: 1;
-    margin: 0 0 4px;
-    display: inline-block;
-    vertical-align: top;
-  }
-
-  section p {
-    margin: 1em 0;
-  }
-
-  section a {
-    text-decoration: none;
-    color: #1ea7fd;
-  }
-
-  section ul {
-    padding-left: 30px;
-    margin: 1em 0;
-  }
-
-  section li {
-    margin-bottom: 8px;
-  }
-
-  section .tip {
-    display: inline-block;
-    border-radius: 1em;
-    font-size: 11px;
-    line-height: 12px;
-    font-weight: 700;
-    background: #e7fdd8;
-    color: #66bf3c;
-    padding: 4px 12px;
-    margin-right: 10px;
-    vertical-align: top;
-  }
-
-  section .tip-wrapper {
-    font-size: 13px;
-    line-height: 20px;
-    margin-top: 40px;
-    margin-bottom: 40px;
-  }
-
-  section .tip-wrapper svg {
-    display: inline-block;
-    height: 12px;
-    width: 12px;
-    margin-right: 4px;
-    vertical-align: top;
-    margin-top: 3px;
-  }
-
-  section .tip-wrapper svg path {
-    fill: #1ea7fd;
-  }
-
-  section {
-    .background-image {
-      background-image: url("$assets/svelte.svg");
-      width: 10rem;
-      height: 10rem;
-      background-size: contain;
-      background-position: center;
-      background-repeat: no-repeat;
-    }
-    img {
-      width: 10rem;
-      height: 10rem;
-    }
-  }
-</style>
+  <div>
+    <button
+      on:click={() => {
+        push("profile").catch((e) => {
+          throw e;
+        });
+      }}>Clique para ir para o Rastreador de Água</button
+    >
+  </div>
+</main>

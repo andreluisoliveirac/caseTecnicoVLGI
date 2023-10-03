@@ -8,7 +8,11 @@
   } from "$stores/WaterConsumed";
   import { onMount } from "svelte";
 
-  async function requestNotificationPermission() {
+  let dailyGoal: number;
+
+  dailyWaterGoal.subscribe(value => dailyGoal = value);
+
+  async function requestNotificationPermission(): Promise<string> {
     try {
       const permission = await Notification.requestPermission();
       return permission;
@@ -19,19 +23,16 @@
   }
 
   function showNotification() {
-    dailyWaterGoal.subscribe(($dailyWaterGoal) => {
-      void requestNotificationPermission().then((permission) => {
-        if (permission === "granted") {
-          const notification = new Notification("Hora de beber água!", {
-            body: `Lembre-se de beber ${$dailyWaterGoal} ml de água regularmente.`,
-          });
+    requestNotificationPermission().then(permission => {
+      if (permission === "granted") {
+        const notification = new Notification("Hora de beber água!", {
+          body: `Lembre-se de beber ${dailyGoal} ml de água regularmente.`,
+        });
 
-          notification.onclick = () => {
-            // Redirecionar para a página de registro de água ingerida
-            window.location.href = "/profile";
-          };
-        }
-      });
+        notification.onclick = () => {
+          window.location.href = "/profile";
+        };
+      }
     });
   }
 
@@ -39,40 +40,30 @@
     showNotification();
     setInterval(showNotification, 15 * 60 * 1000);
   });
+
+  function handleWaterGoalInput(e: Event) {
+    const value = (e.target as HTMLInputElement).valueAsNumber;
+    if (value > 0) {
+      setDailyWaterGoal(value);
+    }
+  }
 </script>
 
 {#if $LoggedInUser}
   <article>
     <h1>{$LoggedInUser.name}</h1>
-    <img
-      src={$LoggedInUser.image}
-      alt="{$LoggedInUser.name}'s profile picture"
-    />
+    <img src={$LoggedInUser.image} alt="{$LoggedInUser.name}'s profile picture" />
   </article>
 {/if}
 
-<!-- Adicionar a quantidade de água  -->
 <div class="container">
   <h1 class="rastreador">Rastreador de Água</h1>
-
   <p>Água ingerida hoje: {$waterConsumed} ml</p>
-
   <p>Meta diária de água: {$dailyWaterGoal} ml</p>
-
   <button on:click={() => addWater(250)}>Adicionar 250 ml</button>
-
-  <input
-    type="number"
-    placeholder="Defina sua meta diária de água (ml)"
-    on:input={(e) => setDailyWaterGoal(e.target.value)}
-  />
-
-  <!-- Exibir progresso de água ingerida no dia atual -->
+  <input type="number" min="1" placeholder="Defina sua meta diária de água (ml)" on:input={handleWaterGoalInput} />
   <div class="progress">
-    <div
-      class="bar"
-      style="width: {($waterConsumed / $dailyWaterGoal) * 100}%"
-    />
+    <div class="bar" style="width: {Math.min(100, Math.max(0, ($waterConsumed / $dailyWaterGoal) * 100))}%"></div>
   </div>
 </div>
 
@@ -80,6 +71,6 @@
   img {
     width: 50ch;
     height: 50ch;
-    border-radius: 100%;
+    border-radius: 50%;
   }
 </style>
