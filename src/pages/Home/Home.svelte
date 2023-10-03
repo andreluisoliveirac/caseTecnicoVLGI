@@ -106,7 +106,7 @@
   <div>
     <button
       on:click={() => {
-        push("profile").catch((e) => {
+        push("/water-tracker").catch((e) => {
           throw e;
         });
       }}>Clique para ir para o Rastreador de Água</button
