@@ -3,8 +3,10 @@
   import { onMount } from "svelte";
 
   let dailyGoal: number;
-
   dailyWaterGoal.subscribe((value) => (dailyGoal = value));
+
+  let startHour = 7; // 7AM
+  let endHour = 22; // 10PM
 
   async function requestNotificationPermission(): Promise<string> {
     try {
@@ -16,12 +18,23 @@
     }
   }
 
+  function getNotificationCount(): number {
+    const notificationsPerHour = 60 / 15; // A cada 15 minutos
+    return (endHour - startHour) * notificationsPerHour;
+  }
+
+  function getNotificationWaterAmount(): number {
+    const notificationsCount = getNotificationCount();
+    const waterPerNotification = dailyGoal / notificationsCount;
+    return Math.round(Math.max(waterPerNotification, 250));
+}
+
   function showNotification() {
     requestNotificationPermission()
       .then((permission) => {
         if (permission === "granted") {
           const notification = new Notification("Hora de beber água!", {
-            body: `Lembre-se de beber ${dailyGoal} ml de água regularmente.`,
+            body: `Lembre-se de beber ${getNotificationWaterAmount()} ml de água.`,
           });
 
           notification.onclick = () => {
@@ -35,8 +48,15 @@
   }
 
   onMount(() => {
-    showNotification();
-    setInterval(showNotification, 15 * 60 * 1000);
+    function checkAndShowNotification() {
+      const currentHour = new Date().getHours();
+      if (currentHour >= startHour && currentHour <= endHour) {
+        showNotification();
+      }
+    }
+
+    checkAndShowNotification();
+    setInterval(checkAndShowNotification, 15 * 60 * 1000);
   });
 
   function handleWaterGoalInput(e: Event) {
@@ -58,6 +78,11 @@
     placeholder="Defina sua meta diária de água (ml)"
     on:input={handleWaterGoalInput}
   />
+  <p>Notificar das:
+    <input type="number" min="0" max="23" bind:value={startHour}>h
+    até:
+    <input type="number" min="0" max="23" bind:value={endHour}>h
+  </p>
   <div class="progress">
     <div
       class="bar"
@@ -68,5 +93,3 @@
     />
   </div>
 </div>
-
-
